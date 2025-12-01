@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Générateur de grilles - FDJ Helper</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- Firebase (version "compat" pour éviter les problèmes de modules) -->
+  <script src="https://www.gstatic.com/firebasejs/12.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDahRckgbCIHn5lSg7iVnKSpG3Qxcd2guQ",
+      authDomain: "tirage-45a5c.firebaseapp.com",
+      projectId: "tirage-45a5c",
+      storageBucket: "tirage-45a5c.firebasestorage.app",
+      messagingSenderId: "544243600292",
+      appId: "1:544243600292:web:4a1545caefa6a3c6f94f31",
+      measurementId: "G-20JB78EXSD"
+    };
+    firebase.initializeApp(firebaseConfig);
+    // dispo partout dans script.js
+    const db = firebase.firestore();
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #3b82f6 0%, #0f172a 45%, #020617 100%);
+      color: #0f172a;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 980px;
+      margin: 16px;
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 24px;
+      box-shadow:
+        0 20px 40px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(148, 163, 184, 0.15);
+      padding: 20px 22px 24px;
+      color: #e5e7eb;
+      backdrop-filter: blur(18px);
+    }
+
+    @media (min-width: 768px) {
+      .app {
+        padding: 26px 30px 30px;
+      }
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title-block h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .title-pill {
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.3), rgba(236, 72, 153, 0.3));
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #e5e7eb;
+    }
+
+    .title-block p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: #9ca3af;
+    }
+
+    .badge {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      font-size: 0.7rem;
+      color: #e5e7eb;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.3);
+    }
+
+    .game-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .game-tab {
+      position: relative;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: rgba(15, 23, 42, 0.85);
+      color: #e5e7eb;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      outline: none;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease, color 0.12s ease;
+      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.35);
+    }
+
+    .game-tab-icon {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
+
+    .game-tab.active {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: #f9fafb;
+      box-shadow:
+        0 8px 18px rgba(37, 99, 235, 0.5),
+        0 0 0 1px rgba(191, 219, 254, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .game-tab:hover:not(.active) {
+      background: rgba(30, 64, 175, 0.9);
+      box-shadow:
+        0 5px 12px rgba(15, 23, 42, 0.6),
+        0 0 0 1px rgba(129, 140, 248, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2.2fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 820px) {
+      .content {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .panel {
+      background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), transparent 55%),
+                  radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.16), transparent 55%),
+                  rgba(15, 23, 42, 0.9);
+      border-radius: 18px;
+      padding: 16px 16px 18px;
+      box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.3),
+        0 14px 28px rgba(15, 23, 42, 0.9);
+    }
+
+    .panel h2 {
+      margin: 0 0 4px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .game-title-icon {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+    }
+
+    .panel small {
+      display: block;
+      color: #9ca3af;
+      font-size: 0.8rem;
+      margin-bottom: 8px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0 14px;
+      padding: 10px 10px 10px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.88);
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
+    }
+
+    .controls label {
+      font-size: 0.8rem;
+      color: #e5e7eb;
+    }
+
+    .controls input[type="number"] {
+      width: 80px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.9);
+      color: #f9fafb;
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    .controls input[type="number"]:focus {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.8);
+    }
+
+    .btn-primary {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #022c22;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow:
+        0 10px 18px rgba(22, 163, 74, 0.55),
+        0 0 0 1px rgba(187, 247, 208, 0.8);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+      box-shadow:
+        0 14px 26px rgba(22, 163, 74, 0.65),
+        0 0 0 1px rgba(187, 247, 208, 1);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow:
+        0 6px 14px rgba(22, 163, 74, 0.55),
+        0 0 0 1px rgba(187, 247, 208, 0.9);
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .section-title span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #f97316;
+      box-shadow: 0 0 0 5px rgba(249, 115, 22, 0.3);
+    }
+
+    .section-subtitle {
+      margin: 0 0 10px;
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+
+    .grids-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .grid-card {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 10px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.22), transparent 60%),
+                  rgba(15, 23, 42, 0.92);
+      box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.4),
+        0 8px 16px rgba(15, 23, 42, 0.9);
+      font-size: 0.8rem;
+    }
+
+    .grid-card.small {
+      background: rgba(15, 23, 42, 0.9);
+      box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.4),
+        0 5px 10px rgba(15, 23, 42, 0.8);
+    }
+
+    .grid-label {
+      font-weight: 600;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: #e5e7eb;
+    }
+
+    .grid-text {
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: #e5e7eb;
+    }
+
+    .grid-text span.main {
+      color: #bfdbfe;
+    }
+
+    .grid-text span.special {
+      color: #fbbf24;
+    }
+
+    .grid-date {
+      margin-left: auto;
+      font-size: 0.7rem;
+      color: #9ca3af;
+      white-space: nowrap;
+    }
+
+    .empty {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      font-style: italic;
+    }
+
+    .side-panel h3 {
+      margin: 0 0 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .side-panel p {
+      margin: 0 0 8px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .game-info {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.9);
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.3);
+      font-size: 0.8rem;
+      color: #e5e7eb;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .info-row span.label {
+      color: #9ca3af;
+    }
+
+    .info-row span.value {
+      font-weight: 500;
+    }
+
+    .hint {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.6);
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <div class="title-block">
+      <h1>
+        Générateur de grilles
+        <span class="title-pill">Euromillions · EuroDreams · Keno · Crescendo · Loto</span>
+      </h1>
+      <p>Choisis ton jeu, génère plusieurs grilles, tout est sauvegardé dans le navigateur.</p>
+    </div>
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Sauvegarde locale + Firestore
+    </div>
+  </header>
+
+  <nav class="game-tabs" id="gameTabs">
+    <button class="game-tab active" data-game="euromillions">
+      <img src="asset/euromillions.png" alt="" class="game-tab-icon">
+      EuroMillions
+    </button>
+    <button class="game-tab" data-game="eurodreams">
+      <img src="asset/eurodreams.png" alt="" class="game-tab-icon">
+      EuroDreams
+    </button>
+    <button class="game-tab" data-game="keno">
+      <img src="asset/keno.png" alt="" class="game-tab-icon">
+      Keno
+    </button>
+    <button class="game-tab" data-game="crescendo">
+      <img src="asset/crescendo.png" alt="" class="game-tab-icon">
+      Crescendo
+    </button>
+    <button class="game-tab" data-game="loto">
+      <img src="asset/loto.png" alt="" class="game-tab-icon">
+      Loto
+    </button>
+  </nav>
+
+  <div class="content">
+    <section class="panel">
+      <h2>
+        <img src="asset/euromillions.png" alt="EuroMillions" id="gameLogo" class="game-title-icon">
+        <span id="gameTitle">EuroMillions</span>
+      </h2>
+      <small id="gameDescription"></small>
+
+      <div class="controls">
+        <label for="gridCount">Nombre de grilles :</label>
+        <input type="number" id="gridCount" min="1" max="20" value="1">
+        <button class="btn-primary" id="generateBtn">
+          <span>Générer</span>
+        </button>
+      </div>
+
+      <div>
+        <h3 class="section-title">
+          <span class="dot"></span> Grilles générées
+        </h3>
+        <p class="section-subtitle">Les grilles ci-dessous sont celles du dernier tirage que tu viens de générer.</p>
+        <div class="grids-list" id="currentGrids"></div>
+      </div>
+
+      <div style="margin-top: 14px;">
+        <h3 class="section-title">
+          <span class="dot" style="background:#22c55e; box-shadow:0 0 0 5px rgba(34,197,94,0.3);"></span>
+          Historique (20 dernières)
+        </h3>
+        <p class="section-subtitle">Historique sauvegardé en local pour ce jeu uniquement.</p>
+        <div class="grids-list" id="historyGrids"></div>
+      </div>
+    </section>
+
+    <aside class="panel side-panel">
+      <h3>Rappel des règles</h3>
+      <p id="rulesText">
+        5 numéros de 1 à 50 et 2 étoiles de 1 à 12.
+      </p>
+
+      <div class="game-info" id="gameInfo">
+        <div class="info-row">
+          <span class="label">Numéros principaux</span>
+          <span class="value" id="infoMain"></span>
+        </div>
+        <div class="info-row">
+          <span class="label">Numéros spéciaux</span>
+          <span class="value" id="infoSpecial"></span>
+        </div>
+        <div class="hint" id="hintText">
+          Les grilles sont générées au hasard, sans aucun « système », juste pour te simplifier la saisie.
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- script JS classique, PAS de type="module" -->
+<script src="script.js"></script>
+</body>
+</html>
