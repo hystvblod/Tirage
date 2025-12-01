@@ -83,6 +83,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
     .title-pill {
@@ -151,6 +152,7 @@
       width: 40px;
       height: 40px;
       object-fit: contain;
+      flex-shrink: 0;
     }
 
     .game-tab.active {
@@ -201,12 +203,14 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     .game-title-icon {
       width: 120px;
       height: 120px;
       object-fit: contain;
+      flex-shrink: 0;
     }
 
     .panel small {
@@ -430,6 +434,85 @@
     ::-webkit-scrollbar-thumb {
       background: rgba(148, 163, 184, 0.6);
       border-radius: 999px;
+    }
+
+    /* BOOST MOBILE */
+    @media (max-width: 600px) {
+      body {
+        align-items: stretch;
+      }
+
+      .app {
+        margin: 10px;
+        padding: 16px 14px 18px;
+        border-radius: 18px;
+      }
+
+      .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .badge {
+        align-self: stretch;
+        justify-content: center;
+        white-space: normal;
+        text-align: center;
+      }
+
+      .title-block h1 {
+        font-size: 1.35rem;
+      }
+
+      .title-pill {
+        font-size: 0.6rem;
+      }
+
+      .game-tabs {
+        justify-content: space-between;
+      }
+
+      .game-tab {
+        flex: 1 1 calc(50% - 6px);
+        justify-content: center;
+        padding: 8px 10px;
+      }
+
+      .game-tab-icon {
+        width: 30px;
+        height: 30px;
+      }
+
+      .panel {
+        padding: 12px 10px 14px;
+      }
+
+      .panel h2 {
+        font-size: 0.95rem;
+      }
+
+      .game-title-icon {
+        width: 72px;
+        height: 72px;
+      }
+
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .controls input[type="number"] {
+        width: 100%;
+      }
+
+      .btn-primary {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .grids-list {
+        max-height: 220px;
+      }
     }
   </style>
 </head>
